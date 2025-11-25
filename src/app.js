@@ -38,4 +38,23 @@ app.use(express.static("public"))
 app.use(cookieParser())
 // by this syntax we can make crud operation (create update delete ) in user browser cookies
 
+
+
+
+//routes import
+
+import userRouter from "./routes/user.routes.js"
+
+
+
+
+// routes declaration
+// here we are doing app.use instead of app.get('/api' ()=>{}) because with app.use we have the access of middleware
+
+// app.use("/users" , userRouter)  //this /user is the api url , what this do is that it routes the api to user.route and in user routes we have the user controller which do functionality
+app.use("/api/v1/users" , userRouter)
+
+
+
+// http://localhost:8000/users/register //this is the api url
 export {app}

@@ -57,7 +57,7 @@ const userSchema = new Schema({
 
 userSchema.pre("save" , async function(next){  // in general we have error request response and next while any data process , we give next access here because we are using middleware and after doing its task it will proceed to next
     if(!this.isModified("password")) return next()
-    this.password = bcrypt.hash(this.password , 10) //this bcrypt provide us the hash method which firstly take value which want to hash and the saltRounds means how many times it wants to rotate the hash
+    this.password = await bcrypt.hash(this.password , 10) //this bcrypt provide us the hash method which firstly take value which want to hash and the saltRounds means how many times it wants to rotate the hash
     next()
 });
 
