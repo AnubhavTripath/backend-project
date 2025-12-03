@@ -68,9 +68,9 @@ userSchema.methods.isPasswordCorrect = async function(password){
 }
 
 
-userSchema.methods.generateAccessToken = async function(){
+userSchema.methods.generateAccessToken = function(){
     // it will directly return the token
-    return await jwt.sign( //these methods are directly connected with db and know about the current execution context so that we can get the value by using 'this'
+    return jwt.sign( //these methods are directly connected with db and know about the current execution context so that we can get the value by using 'this'
         {
             _id: this._id,
             email: this.email,
@@ -79,7 +79,6 @@ userSchema.methods.generateAccessToken = async function(){
         },
         process.env.ACCESS_TOKEN_SECRET,
         { 
-            algorithm: 'RS256',
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
          },
 
@@ -87,15 +86,14 @@ userSchema.methods.generateAccessToken = async function(){
 }
 
 
-userSchema.methods.generateRefreshToken = async function(){
-    return await jwt.sign(
+userSchema.methods.generateRefreshToken = function(){
+    return jwt.sign(
         {
             _id: this._id
         },
         process.env.REFRESH_TOKEN_SECRET,
         { 
-            algorithm: 'RS256',
-            expiresIn: process.env.REFRESH_TOKEN_SECRET
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
          },
     )
 }
