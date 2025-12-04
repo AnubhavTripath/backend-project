@@ -9,12 +9,11 @@ export const verifyJWT = asyncHandler(async(req , res , next) => {
      const token = req.cookies?.accessToken || req.header("Autherization")?.replace("Bearer " , "") // we are accessing user access token 
      // also checking that is user passed the token in there header may be this api is being used in the mobile app in that case we cannot set the tokens in cookies
  
-     console.log("printing token" , token)
      if(!token){
          throw new ApiError(401 , "Unotherized request")
      }
  
-     // to access the token we need to verify the token
+     // to access the token we need to verify the token , it will give all the data which we have stored in the token
      const decodedToken = jwt.verify(token , process.env.ACCESS_TOKEN_SECRET) // to verify it takes the token and the secret key
      const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
  
