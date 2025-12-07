@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {loginUser, logOutUser, refreshAccessToken, registerUser} from "../controllers/user.controller.js";
+import {changeCurrentPassword, getCurrentUser, loginUser, logOutUser, refreshAccessToken, registerUser} from "../controllers/user.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -28,5 +28,9 @@ router.route("/logout").post(verifyJWT , logOutUser) //in logout api it firstly 
 // api it will go to the logOutUser controller
 
 router.route("/refresh-token").post(refreshAccessToken)
+
+router.route("/update-password").post(verifyJWT , changeCurrentPassword)
+
+router.route("/get-current-user").post(verifyJWT , getCurrentUser)
 
 export default router
