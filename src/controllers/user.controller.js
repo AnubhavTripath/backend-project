@@ -379,6 +379,86 @@ const updateUserCoverImage = asyncHandler(async(req , res)=> {
 
 })
 
+// here we are writing the aggregation pipeline 
+// [{}, {} , {}] aggregation pipeline will be written in the array and every object is a pipeline 
+
+const getUserChannelProfile = asyncHandler(async(req , res)=> {
+    const {username} = req.username;
+
+    if(!username?.trim()){
+        throw new ApiError(400 , "username is missing!")
+    }
+
+    // to apply aggregation pipeline in modal we have to write .aggregate() method in which we have to write the pipelines
+    const channel = await User.aggregate([
+        {
+            $match: {  //match gives the user which matches the field
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: { //from lookup we can add two model tables together , like here we are joining the user model and the subscription model
+                from: "subscriptions", // in mongodb database internally model name is being set in lowerCase and in plural form so from "Subscription" it changes to "subscriptions"
+                localField: "_id", // localfield hame use karte hai current modal ki unique field jo ki _id hai
+                foreignField: "channel",  //foreignField is the field which we are selecting here from another modal
+                as: "subscribers"  //"as" will save that data with this name and note that the data will come in array like this [{subscribers}]    
+            }
+        },
+        {
+            $lookup : {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        // addFields, add extra fields along with the existing field of that current modal
+        { 
+            $addFields: {
+                subscribersCount: { //subscribersCount is the name of the field which we are adding
+                    $size: "$subscribers" //we added the "$" infront because this is a field and this "subscribers" is the field which we created in upper lookup in "as"
+                },
+                channelSubscribedToCount : {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user?._id , "$subscribers.subscriber"]}, //this "$in" helps to check that this is present or not it can check both in array and in object
+                            // "$subscribers.subscriber" why we written this? , it is because $subscribers is the modal inside which are selecting the field subscriber and we 
+                            // are trying to find that this _id is present in that subscriber list then i was subscribed to the current account    
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        { //"$project" send only the field we wanted to send 
+            $project: {
+                fullName: 1, // those field we wanted to send we write 1 infront of it
+                username: 1,
+                subscribersCount: 1,
+                channelSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+            }
+        }
+    ]) 
+
+    if(!channel?.length()){
+        throw new ApiError(404 , "channel not found")
+    }
+
+    console.log("channel response" , channel)
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200 , channel[0] , "user channel fetched successfully")
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -388,5 +468,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 };

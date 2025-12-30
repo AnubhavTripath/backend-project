@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {changeCurrentPassword, getCurrentUser, loginUser, logOutUser, refreshAccessToken, registerUser} from "../controllers/user.controller.js";
+import {changeCurrentPassword, getCurrentUser, loginUser, logOutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage} from "../controllers/user.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -28,9 +28,11 @@ router.route("/logout").post(verifyJWT , logOutUser) //in logout api it firstly 
 // api it will go to the logOutUser controller
 
 router.route("/refresh-token").post(refreshAccessToken)
+router.route("/change-password").post(verifyJWT , changeCurrentPassword)
+router.route("/current-user").post(verifyJWT , getCurrentUser)
+router.route("/update-account").patch(verifyJWT , updateAccountDetails)
 
-router.route("/update-password").post(verifyJWT , changeCurrentPassword)
-
-router.route("/get-current-user").post(verifyJWT , getCurrentUser)
+router.route("/avatar").patch(verifyJWT , upload.single("avatar") , updateUserAvatar)
+router.route("cover-image").patch(verifyJWT , upload.single("coverImage") , updateUserCoverImage)
 
 export default router
