@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
 import {deleteOldImageOnCloudinary, uploadOnCloudinary} from "../utils/cloudinary.js"
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -459,6 +460,69 @@ const getUserChannelProfile = asyncHandler(async(req , res)=> {
     )
 })
 
+const getWatchHistory = asyncHandler(async(req , res) => {
+    const user = await User.aggregate([
+        {
+            $match: { //here we are matching _id like this because "new mongoose.Types.ObjectId(req.user?._id)" generally the _id of the mongoose is stored in db like this
+                // ObjectId('uskjhsd9') when we get the id from the user._id then we get only string part not the complete ObjectId , but when it is working with mongoose 
+                // it directly manage it . but in the aggregation pipeline mongoose doesn't work itself so we have to do it manually
+                
+                _id: new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+
+                // in watchhistory we can write the pipeline further down
+                pipeline: [
+                    // in watchHistory we have a field owner which is the technically user so we are joining it by lookup
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+
+                            // we are writing further down the pipeline to project the user data because we don't want to give complete data again of user
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+
+                    // we are writing here the second pipeline in the watchHistory because we don't want to send the owner data in array because we know that the aggregation pipeline always return array 
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        200, 
+        user[0].watchHistory,
+        "watchHistory fetched successfully"
+    )
+
+})
+
 export {
     registerUser,
     loginUser,
@@ -469,5 +533,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 };
